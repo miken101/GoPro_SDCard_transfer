@@ -5,14 +5,12 @@ from os import rename as r
 from os import remove as rm
 from glob import glob as ls
 from shutil import move as mv
+import configparser
+cfg = configparser.ConfigParser(interpolation=None)
+cfg.read('Detect_SDCard.ini')
 import threading
 from datetime import date, datetime as dt, timedelta as td
 import time
-import logging
-from selenium.webdriver.common.devtools.v106 import input_
-from orca.messages import selectedItemsCount
-from docutils.utils.math.math2html import file
-logging.basicConfig(level=logging.INFO)
 
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import (
@@ -61,17 +59,20 @@ helpText = '<img src="' + get_path('./images/25_trans_60x60.png') + '"<br><br>' 
              <a href="mailto:mike.norris@nodmore.info?subject=Thank you for the GoPro SDCard transfer script.&body= \
              Many thanks. ">created by Mike Norris</a>'
 
-base_src_folder = "/media/mike/3832-3234/DCIM/*/*"
-base_dest_folder = '/home/mike/Videos/DaVinci/'
-hd_extension = ("MP4")
-proxy_extension = ("LRV")
-new_proxy_extension = ("mov")
+base_src_folder = cfg['DEFAULT']['base_src_folder']
+base_dest_folder = cfg['DEFAULT']['base_dest_folder']
+hd_extension = cfg['DEFAULT']['hd_extension']
+proxy_extension = cfg['DEFAULT']['proxy_extension']
+new_proxy_extension = cfg['DEFAULT']['new_proxy_extension']
+date_format = cfg['DEFAULT']['date_format']
+proxy_name = cfg['DEFAULT']['proxy_name']
+
 today = dt.now()
 year_folder = str(today.year)
-folder_name = today.strftime('%Y-%m-%d') + ' ' + ' '
+folder_name = today.strftime(date_format) + ' ' + ' '
 folder_name = folder_name.strip()
 dest_folder = p.join(base_dest_folder, year_folder, folder_name)
-proxy_name = "proxy"
+
 
 
 class UiMainWindow(object):
@@ -98,7 +99,6 @@ class UiMainWindow(object):
         self.minimpLabel.setText('Src. folder:')
         self.minimp = QLineEdit(self)
         self.minimp.setText(base_src_folder)
-        self.minimp.setEnabled(False)
         self.minimp.move(124, 30)
         self.minimp.resize(404, 25)
         self.minimpLabel.move(32, 30)
