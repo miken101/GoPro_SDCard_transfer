@@ -2,27 +2,25 @@ import sys
 from os import path as p
 from os import makedirs as md
 from os import rename as r
-from os import remove as rm
 from glob import glob as ls
 from shutil import move as mv
 import configparser
 cfg = configparser.ConfigParser(interpolation=None)
-cfg.read('Detect_SDCard.ini')
+cfg.read('Detect_SDCard.cfg')
+
 import threading
-from datetime import date, datetime as dt, timedelta as td
-import time
+from datetime import datetime as dt
 
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import (
     QLabel,
     QLineEdit,
     QPushButton,
-    QCheckBox,
     QAction,
-    QDateEdit,
     QMessageBox,
     QTextEdit,
-    QMenuBar
+    QMenuBar,
+    QProgressBar
 )
 from PyQt5.QtCore import (
     QSize
@@ -56,7 +54,7 @@ helpText = '<img src="' + get_path('./images/25_trans_60x60.png') + '"<br><br>' 
             <span style="color:Blue;">Move Files:</span> Moves the "MP4" and "LRV" files from the SD Card to the destination folder \
             renaming proxy files with "mov" extension. <br> \
          <span style="color:Blue;">List Dest.:</span> Lists the contents of the "Dest folder", both "MP4" and "mov" files are listed. <br> \
-             <a href="mailto:mike.norris@nodmore.info?subject=Thank you for the GoPro SDCard transfer script.&body= \
+             <a href="mailto:docker@nodmore.info?subject=Thank you for the GoPro SDCard transfer script.&body= \
              Many thanks. ">created by Mike Norris</a>'
 
 base_src_folder = cfg['DEFAULT']['base_src_folder']
@@ -86,8 +84,8 @@ class UiMainWindow(object):
         self.outBox = QTextEdit(self.centralwidget)
         self.outBox.setReadOnly(True)
         self.outBox.setObjectName("outBox")
-        self.outBox.move(20, 80)
-        self.outBox.resize(760, 420)
+        self.outBox.move(20, 120)
+        self.outBox.resize(760, 380)
         mainwindow.setCentralWidget(self.centralwidget)
 
         self.menubar = QMenuBar(mainwindow)
@@ -95,21 +93,26 @@ class UiMainWindow(object):
         self.menubar.setObjectName("menubar")
         mainwindow.setMenuBar(self.menubar)
 
-        self.minimpLabel = QLabel(self)
-        self.minimpLabel.setText('Src. folder:')
-        self.minimp = QLineEdit(self)
-        self.minimp.setText(base_src_folder)
-        self.minimp.move(124, 30)
-        self.minimp.resize(404, 25)
-        self.minimpLabel.move(32, 30)
+        self.impLabel = QLabel(self)
+        self.impLabel.setText('Src. folder:')
+        self.impLabel.move(42, 30)
+        self.imp = QLineEdit(self)
+        self.imp.setText(base_src_folder)
+        self.imp.setGeometry(124, 30, 404, 25)
         
-        self.minexpLabel = QLabel(self)
-        self.minexpLabel.setText('Dest. folder:')
-        self.minexp = QLineEdit(self)
-        self.minexp.setText(dest_folder)
-        self.minexp.move(124, 60)
-        self.minexp.resize(404, 25)
-        self.minexpLabel.move(32, 60)
+        self.expLabel = QLabel(self)
+        self.expLabel.setText('Dest. folder:')
+        self.expLabel.move(32, 60)
+        self.exp = QLineEdit(self)
+        self.exp.setText(dest_folder)
+        self.exp.setGeometry(124, 60, 404, 25)
+        
+        self.progressLabel = QLabel(self)
+        self.progressLabel.setText('Progress:')
+        self.progressLabel.move(48, 90)
+        self.progress_bar = QProgressBar(self)
+        self.progress_bar.setGeometry(124, 90, 300, 25)
+        self.progress_bar.setMaximum(100)
 
         self.mvbutt = QPushButton('mvbutt', self)
         self.mvbutt.move(400, 535)
@@ -222,7 +225,7 @@ class MainWindow(QtWidgets.QMainWindow, UiMainWindow):
 
     
     def func_mkdir(self):
-        dest_folder = self.minexp.text()
+        dest_folder = self.exp.text()
         proxy_folder = p.join(dest_folder, proxy_name)
         try:
             md(dest_folder)
@@ -249,7 +252,7 @@ class MainWindow(QtWidgets.QMainWindow, UiMainWindow):
         self.valueChanged.emit('<span style="color:Green;">Proxy Files:</span><br>' + str_proxy_files + '<br>')
         
     def func_outlist(self):
-        dest_folder = self.minexp.text()        
+        dest_folder = self.exp.text()        
         hd_list = ls(dest_folder + '/*')
         proxy_list = ls(dest_folder + '/' + proxy_name + '/*')
         hd_files = [k for k in hd_list if k.endswith(hd_extension)]
@@ -262,7 +265,7 @@ class MainWindow(QtWidgets.QMainWindow, UiMainWindow):
 
     def func_move(self):
         w.func_mkdir()
-        dest_folder = self.minexp.text()
+        dest_folder = self.exp.text()
         proxy_folder = p.join(dest_folder, proxy_name)
         sd_files = ls(base_src_folder)
         hd_files = [k for k in sd_files if k.endswith(hd_extension)]
